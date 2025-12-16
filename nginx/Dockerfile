@@ -14,8 +14,9 @@ ENV APP_ENV=production
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # ------------------------------------------------------------------------------
-# 1. Install System Dependencies & Nginx
+# 1. Install System Dependencies & Nginx (PERSISTENT TOOLS)
 # ------------------------------------------------------------------------------
+# Note: Added gzip and openssl here so they remain in the final image
 RUN apk add --no-cache \
     nginx \
     curl \
@@ -23,11 +24,14 @@ RUN apk add --no-cache \
     icu-libs \
     shadow \
     bash \
+    gzip \
+    openssl \
     && mkdir -p /run/nginx
 
 # ------------------------------------------------------------------------------
 # 2. Install PHP Extensions & Redis
 # ------------------------------------------------------------------------------
+# Note: Dependencies here are removed after compile to save space
 RUN apk add --no-cache --virtual .build-deps \
     $PHPIZE_DEPS \
     libzip-dev \

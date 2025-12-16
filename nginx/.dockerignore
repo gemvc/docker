@@ -12,3 +12,4 @@ opcache-dev.ini
 *.bak
 node_modules
 vendor
+README.md
