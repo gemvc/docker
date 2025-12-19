@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IMPORTANT: Keep .htaccess files - they are needed for routing and security
+# .htaccess files are NOT ignored and will be included in the image
+
+# Dependencies (will be installed in container)
+node_modules/
+vendor/
+/assets/
+
+
+# Composer files (not needed - package installed directly in Dockerfile)
+composer.json
+composer.lock
+
+# Build artifacts (should be pre-built before docker build)
+# public/assets/build/ - Keep this if assets are pre-built
+
+# Development files
+.env.local
+.env.*.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README*.md
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Source files that won't be needed (if assets are pre-built)
+# Uncomment if you want to exclude source JS files
+# assets/js/
