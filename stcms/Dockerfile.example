@@ -1,0 +1,48 @@
+# Example Dockerfile for STCMS Application
+# This shows how to extend the stcms-base image in your project
+#
+# Usage in your project:
+#   1. Build/pull the base image: stcms-base:x.x.x (replace x.x.x with version, e.g., 1.6.2)
+#   2. Copy this Dockerfile to your project root
+#   3. Customize as needed (add volumes, env vars, etc.)
+#   4. Build: docker build -t my-stcms-app:latest .
+
+# Use the STCMS base image
+# Option 1: Use from registry
+# Replace x.x.x with the STCMS version (e.g., 1.6.2)
+# FROM your-registry/stcms-base:x.x.x
+
+# Option 2: Use local base image (build Dockerfile.x.x.x first)
+# Replace x.x.x with the STCMS version (e.g., 1.6.2)
+FROM stcms-base:x.x.x
+
+# Set working directory (already set in base)
+WORKDIR /var/www/html
+
+# Copy your application files
+# Note: Base image already has both .htaccess files
+# You can override them by copying your own .htaccess files here
+COPY --chown=www-data:www-data . .
+
+# If you need to install additional Composer dependencies
+# COPY composer.json composer.lock ./
+# RUN composer install --no-dev --optimize-autoloader
+
+# If you need to run custom setup scripts
+# RUN chmod +x scripts/setup.sh && ./scripts/setup.sh
+
+# Verify .htaccess files are present (base has them, but verify after copy)
+RUN test -f .htaccess && test -f public/.htaccess && echo " .htaccess files verified" || (echo "ERROR: .htaccess files missing!" && exit 1)
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && find /var/www/html -type d -exec chmod 755 {} \; \
+    && find /var/www/html -type f -exec chmod 644 {} \;
+
+# Expose ports (already exposed in base, but explicit here)
+EXPOSE 80 443
+
+# Health check (already set in base, but can override if needed)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+

@@ -1,0 +1,141 @@
+# Base Docker Image for STCMS Applications
+# This image contains all common STCMS setup and can be extended by application-specific images
+# 
+# Build this base image once and tag it (e.g., stcms-base:1.6.2)
+# Then application Dockerfiles can extend FROM stcms-base:1.6.2
+#
+# Usage:
+#   docker build -f Dockerfile.1.6.2 -t stcms-base:1.6.2 .
+#   docker push your-registry/stcms-base:1.6.2
+
+FROM php:8.2-apache
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    libicu-dev \
+    libonig-dev \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    unzip \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install -j$(nproc) \
+    zip \
+    intl \
+    mbstring \
+    opcache
+
+# Install APCu extension (for caching)
+RUN pecl install apcu && docker-php-ext-enable apcu
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configure Apache
+RUN a2enmod rewrite headers ssl \
+    && echo "ServerTokens Prod" >> /etc/apache2/apache2.conf \
+    && echo "ServerSignature Off" >> /etc/apache2/apache2.conf
+
+# Configure PHP for production
+RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/custom.ini \
+    && echo "upload_max_filesize = 10M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "post_max_size = 10M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.interned_strings_buffer=8" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "opcache.revalidate_freq=2" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "apc.enabled=1" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "apc.shm_size=64M" >> /usr/local/etc/php/conf.d/custom.ini \
+    && echo "expose_php=Off" >> /usr/local/etc/php/conf.d/custom.ini
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Initialize Composer and install gemvc/stcms package directly
+# Fixed to version 1.6.2 for reproducibility and predictability
+# This makes the base image independent - always includes gemvc/stcms 1.6.2
+RUN composer init --no-interaction --name="stcms/base" --description="STCMS Base Image" \
+    && composer require "gemvc/stcms:1.6.2" --no-interaction --optimize-autoloader
+
+# Create root .htaccess file (STCMS Secure Root .htaccess)
+RUN cat > /var/www/html/.htaccess << 'EOF'
+#
+# STCMS Secure Root .htaccess
+#
+
+# --- 1. Security: Block all files and directories starting with a dot ---
+# This is a  general rule that protects .git, .env, etc.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\." - [F]
+</IfModule>
+
+
+# --- 2. Security: Explicitly forbid access to sensitive directories ---
+# Any direct web request to these folders will be blocked.
+# This replaces the need for separate .htaccess files inside them.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(src|vendor|templates|pages|components|assets)/?$ - [F,NC,L]
+</IfModule>
+
+
+# --- 3. Routing: Pass all other requests to the public folder ---
+# If a request was not blocked by the rules above, it's sent to the public folder.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+EOF
+
+# Create public directory and public/.htaccess file
+RUN mkdir -p /var/www/html/public && \
+    cat > /var/www/html/public/.htaccess << 'EOF'
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Send requests to front controller if they don't point to a real file or directory
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+        Header set Cache-Control "public, immutable, max-age=31536000"
+    </FilesMatch>
+</IfModule>
+EOF
+
+# Configure Apache document root
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && find /var/www/html -type d -exec chmod 755 {} \; \
+    && find /var/www/html -type f -exec chmod 644 {} \;
+
+# Verify .htaccess files are present
+RUN test -f .htaccess && test -f public/.htaccess && echo "✅ .htaccess files verified" || (echo "❌ ERROR: .htaccess files missing!" && exit 1)
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+# Label for identification
+LABEL maintainer="STCMS Team" \
+      version="1.6.2" \
+      description="Base image for STCMS applications with PHP 8.2, Apache, gemvc/stcms:1.6.2, and both .htaccess files"
+
