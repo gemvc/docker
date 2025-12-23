@@ -86,12 +86,15 @@ FROM composer-stage AS final
 
 # Enable Apache modules for performance
 # Alpine Apache modules are enabled via LoadModule directives in conf.d/
-# Modules are typically auto-loaded, but we ensure they're available
-RUN echo "LoadModule rewrite_module modules/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf \
-    && echo "LoadModule headers_module modules/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf \
-    && echo "LoadModule deflate_module modules/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf \
-    && echo "LoadModule expires_module modules/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf \
-    || echo "Modules configuration"
+# Check if modules are already loaded (in httpd.conf or any conf.d/*.conf) before adding them
+RUN (grep -r "LoadModule.*rewrite_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
+        echo "LoadModule rewrite_module modules/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf \
+    && (grep -r "LoadModule.*headers_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
+        echo "LoadModule headers_module modules/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf \
+    && (grep -r "LoadModule.*deflate_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
+        echo "LoadModule deflate_module modules/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf \
+    && (grep -r "LoadModule.*expires_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
+        echo "LoadModule expires_module modules/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf
 
 # Handle MPM Event configuration
 # Alpine Apache uses different module structure
@@ -102,12 +105,17 @@ RUN if [ -f /etc/apache2/conf.d/mpm_event.conf ]; then \
         echo "Using default MPM (prefork or worker)"; \
     fi
 
-# Configure Apache to use PHP module
-RUN echo "LoadModule php_module /usr/lib/apache2/mod_php84.so" > /etc/apache2/conf.d/php.conf \
-    && echo "DirectoryIndex index.php index.html" >> /etc/apache2/conf.d/php.conf
+# Check what config files Alpine's php84-apache2 package created
+# This helps us avoid conflicts
+RUN echo "=== Existing Apache config files ===" && \
+    ls -la /etc/apache2/conf.d/ || true && \
+    echo "=== Checking for duplicate module loads ===" && \
+    (grep -r "LoadModule.*php_module" /etc/apache2/ 2>/dev/null || echo "No php_module LoadModule found") && \
+    echo "=== Config check complete ===" || true
 
 # Copy optimized Apache configuration files
 # Alpine Apache uses /etc/apache2/conf.d/ for configuration
+# Note: php84-apache2 package may already configure PHP module, so we use a separate file
 COPY mpm_event.conf /etc/apache2/conf.d/mpm_event.conf
 COPY php.conf /etc/apache2/conf.d/php-handler.conf
 COPY security.conf /etc/apache2/conf.d/security.conf
@@ -120,6 +128,10 @@ COPY opcache.ini /etc/php84/conf.d/opcache.ini
 
 # Copy .htaccess file (GEMVC routing and performance config)
 COPY .htaccess /var/www/html/.htaccess
+
+# Create log directory for Apache
+RUN mkdir -p /var/log/apache2 \
+    && chown -R www-data:www-data /var/log/apache2 || true
 
 # Configure Apache document root in httpd.conf
 RUN sed -i 's|#ServerName www.example.com:80|ServerName localhost:80|' /etc/apache2/httpd.conf \
