@@ -1,0 +1,117 @@
+# ============================================================================
+# GEMVC Docker Compose Configuration - OPTIMIZED
+# Example for using gemvc-apache base image
+# ============================================================================
+
+services:
+  # Base Apache image builder (optional - only if building base locally)
+  # Uncomment if you want to build the base image as part of compose
+  # apache-base:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   image: gemvc-apache:latest
+  #   # Don't start this service, it's just for building the base image
+  #   profiles:
+  #     - build
+
+  # Web application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # If using base image from registry, you can use:
+      # args:
+      #   BASE_IMAGE: yourusername/gemvc-apache:latest
+    image: gemvc-app:latest
+    container_name: gemvc-app
+    ports:
+      - "80:80"
+    volumes:
+      # Mount application code (for development)
+      - ./:/var/www/html:delegated
+      # Mount .env file (read-only)
+      - ./.env:/var/www/html/.env:ro
+    restart: unless-stopped
+    networks:
+      - backend-network
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: 1.5
+    environment:
+      - PHP_DNS_CACHE_ENABLED=1
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    healthcheck:
+      # Use wget (available in Alpine base image) instead of curl
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: mysql:8.0
+    container_name: gemvc-db
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --authentication-policy=caching_sha2_password
+      - --host-cache-size=128
+      - --pid-file=/var/lib/mysql/mysql.pid
+      - --disable-ssl
+      - --log-error-verbosity=1
+      - --skip-log-bin
+      - --skip-name-resolve
+      - --skip-symbolic-links
+      - --innodb-flush-log-at-trx-commit=2
+      - --innodb-buffer-pool-size=1536M
+      - --innodb-log-file-size=128M
+      - --innodb-flush-method=O_DIRECT
+      - --innodb-file-per-table=1
+      - --max-connections=300
+      - --thread-cache-size=50
+      - --table-open-cache=2000
+      - --table-definition-cache=1400
+      - --net-buffer-length=16384
+      - --max-allowed-packet=64M
+      - --bulk-insert-buffer-size=16M
+      - --read-buffer-size=512K
+      - --read-rnd-buffer-size=1M
+      - --sort-buffer-size=1M
+      - --join-buffer-size=1M
+      - --tmp-table-size=64M
+      - --max-heap-table-size=64M
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    networks:
+      - backend-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  backend-network:
+    driver: bridge
+

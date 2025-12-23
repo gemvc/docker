@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     php84-xml \
     php84-curl \
     php84-bcmath \
+    php84-tokenizer \
     php84-pear \
     # Build dependencies for PHP extensions
     $PHPIZE_DEPS \
@@ -54,8 +55,20 @@ RUN apk add --no-cache \
 # Stage 2: PHP Extensions
 FROM base AS php-extensions
 
-# PHP 8.4 extensions are already installed via apk, but configure if needed
-# Additional extensions can be installed via PECL if required
+# Install tokenizer extension via Alpine package (if available)
+# php84-tokenizer should be available in Alpine PHP 8.4 packages
+RUN apk add --no-cache php84-tokenizer 2>/dev/null || \
+    (echo "WARNING: php84-tokenizer package not found. You may need to compile it." && \
+     echo "To compile: Install PHP source and use phpize to build tokenizer extension")
+
+# Verify tokenizer is loaded
+RUN php -m | grep -i tokenizer || echo "WARNING: tokenizer extension not loaded"
+
+# Verify iconv is available (usually built into php84-common)
+# iconv is typically included in php84-common, verify it's available
+RUN php -m | grep -i iconv || \
+    (echo "extension=iconv.so" >> /etc/php84/php.ini && echo "iconv enabled via php.ini")
+
 # Cleanup build dependencies
 RUN apk del $PHPIZE_DEPS build-base linux-headers || true
 
