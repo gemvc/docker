@@ -20,6 +20,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN apk add --no-cache \
     apache2 \
     apache2-utils \
+    apache2-proxy \
     curl \
     wget \
     libzip \
@@ -78,14 +79,26 @@ COPY php.ini /usr/local/etc/php/conf.d/gemvc.ini
 COPY opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
 # ------------------------------------------------------------------------------
-# 5. Enable Apache Modules
+# 5. Enable Apache Modules (only if not already loaded)
 # ------------------------------------------------------------------------------
-RUN echo "LoadModule rewrite_module modules/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf && \
-    echo "LoadModule headers_module modules/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf && \
-    echo "LoadModule deflate_module modules/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf && \
-    echo "LoadModule expires_module modules/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf && \
-    echo "LoadModule proxy_module modules/mod_proxy.so" > /etc/apache2/conf.d/00-proxy.conf && \
-    echo "LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so" > /etc/apache2/conf.d/00-proxy-fcgi.conf
+RUN if ! grep -q "LoadModule.*rewrite_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule rewrite_module /usr/lib/apache2/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf; \
+    fi && \
+    if ! grep -q "LoadModule.*headers_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule headers_module /usr/lib/apache2/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf; \
+    fi && \
+    if ! grep -q "LoadModule.*deflate_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule deflate_module /usr/lib/apache2/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf; \
+    fi && \
+    if ! grep -q "LoadModule.*expires_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule expires_module /usr/lib/apache2/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf; \
+    fi && \
+    if [ -f /usr/lib/apache2/mod_proxy.so ] && ! grep -q "LoadModule.*proxy_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule proxy_module /usr/lib/apache2/mod_proxy.so" > /etc/apache2/conf.d/00-proxy.conf; \
+    fi && \
+    if [ -f /usr/lib/apache2/mod_proxy_fcgi.so ] && ! grep -q "LoadModule.*proxy_fcgi_module" /etc/apache2/httpd.conf /etc/apache2/conf.d/*.conf 2>/dev/null; then \
+        echo "LoadModule proxy_fcgi_module /usr/lib/apache2/mod_proxy_fcgi.so" > /etc/apache2/conf.d/00-proxy-fcgi.conf; \
+    fi
 
 # ------------------------------------------------------------------------------
 # 6. Copy Apache Configuration Files

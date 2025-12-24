@@ -4,7 +4,7 @@
 # ============================================================================
 
 # Use the GEMVC Apache base image
-FROM gemvc-apache:latest
+FROM gemvc/apache:latest
 
 # Set working directory
 WORKDIR /var/www/html
