@@ -64,10 +64,14 @@ RUN apk add --no-cache php84-tokenizer 2>/dev/null || \
 # Verify tokenizer is loaded
 RUN php -m | grep -i tokenizer || echo "WARNING: tokenizer extension not loaded"
 
-# Verify iconv is available (usually built into php84-common)
-# iconv is typically included in php84-common, verify it's available
-RUN php -m | grep -i iconv || \
-    (echo "extension=iconv.so" >> /etc/php84/php.ini && echo "iconv enabled via php.ini")
+# Verify and install iconv extension (robust check)
+RUN if ! php -m | grep -q iconv; then \
+        apk add --no-cache php-iconv || \
+        (apk add --no-cache --virtual .build-deps $PHPIZE_DEPS && \
+         docker-php-ext-install iconv && \
+         apk del .build-deps) || \
+        (echo "ERROR: Could not install iconv extension. Please rebuild gemvc-apache base image with iconv support" && exit 1); \
+    fi
 
 # Cleanup build dependencies
 RUN apk del $PHPIZE_DEPS build-base linux-headers || true
@@ -86,15 +90,11 @@ FROM composer-stage AS final
 
 # Enable Apache modules for performance
 # Alpine Apache modules are enabled via LoadModule directives in conf.d/
-# Check if modules are already loaded (in httpd.conf or any conf.d/*.conf) before adding them
-RUN (grep -r "LoadModule.*rewrite_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
-        echo "LoadModule rewrite_module modules/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf \
-    && (grep -r "LoadModule.*headers_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
-        echo "LoadModule headers_module modules/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf \
-    && (grep -r "LoadModule.*deflate_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
-        echo "LoadModule deflate_module modules/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf \
-    && (grep -r "LoadModule.*expires_module" /etc/apache2/ 2>/dev/null | grep -q .) || \
-        echo "LoadModule expires_module modules/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf
+# Create module configuration files directly to ensure they're loaded
+RUN echo "LoadModule rewrite_module modules/mod_rewrite.so" > /etc/apache2/conf.d/00-rewrite.conf && \
+    echo "LoadModule headers_module modules/mod_headers.so" > /etc/apache2/conf.d/00-headers.conf && \
+    echo "LoadModule deflate_module modules/mod_deflate.so" > /etc/apache2/conf.d/00-deflate.conf && \
+    echo "LoadModule expires_module modules/mod_expires.so" > /etc/apache2/conf.d/00-expires.conf
 
 # Handle MPM Event configuration
 # Alpine Apache uses different module structure
