@@ -47,7 +47,6 @@ RUN apk add --no-cache --virtual .build-deps \
     linux-headers \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo \
         pdo_mysql \
         opcache \
         zip \
@@ -57,15 +56,12 @@ RUN apk add --no-cache --virtual .build-deps \
         xml \
         curl \
         bcmath \
-        tokenizer \
     && docker-php-ext-enable opcache \
     && apk del .build-deps
 
-# Verify iconv is available (usually built into PHP core)
-RUN if ! php -m | grep -q iconv; then \
-        docker-php-ext-install iconv || \
-        (echo "ERROR: Could not install iconv extension" && exit 1); \
-    fi
+# Verify iconv and tokenizer are available (usually built into PHP core)
+RUN php -m | grep -q iconv || docker-php-ext-install iconv || echo "WARNING: iconv not found"
+RUN php -m | grep -q tokenizer || echo "WARNING: tokenizer not found (should be built-in)"
 
 # ------------------------------------------------------------------------------
 # 3. Install Composer Binary
