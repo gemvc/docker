@@ -4,9 +4,9 @@ Production-ready base Docker image for GEMVC applications with Apache, PHP 8.4, 
 
 ## Features
 
-- ✅ **Alpine-based** - Minimal image size (~380MB)
-- ✅ **PHP 8.4** - Latest PHP version with all required extensions
-- ✅ **Apache** - High-performance web server
+- ✅ **Alpine-based** - Minimal image size (~116MB) using `php:8.4-fpm-alpine` base
+- ✅ **PHP 8.4 FPM** - Latest PHP version with PHP-FPM and all required extensions
+- ✅ **Apache** - High-performance web server with FastCGI proxy to PHP-FPM
 - ✅ **Composer** - PHP dependency manager pre-installed
 - ✅ **Performance optimized** - OPcache with JIT, Gzip compression, browser caching
 - ✅ **Security hardened** - Security headers, sensitive files/directories blocked
@@ -91,9 +91,9 @@ docker build -t my-gemvc-app:latest .
 
 The base image includes:
 
-1. **Alpine Linux** - Minimal base OS
-2. **Apache 2** - Web server with modules: rewrite, headers, deflate, expires
-3. **PHP 8.4** - With extensions: pdo, pdo_mysql, zip, gd, intl, mbstring, xml, curl, bcmath, opcache, phar
+1. **Alpine Linux** - Minimal base OS (via `php:8.4-fpm-alpine`)
+2. **Apache 2** - Web server with modules: rewrite, headers, deflate, expires, proxy, proxy_fcgi
+3. **PHP 8.4 FPM** - PHP-FPM with extensions: pdo, pdo_mysql, zip, gd, intl, mbstring, xml, curl, bcmath, tokenizer, opcache, iconv
 4. **Composer** - PHP dependency manager
 5. **GEMVC `.htaccess`** - Routing configuration with `_gemvc_url_path` parameter
 6. **Security configuration** - Blocks sensitive files and directories
@@ -155,8 +155,8 @@ GEMVC framework handles error display in development environment.
 
 ## Image Size
 
-- **Base image**: ~380MB (Alpine + Apache + PHP 8.4 + extensions)
-- **Minimal footprint** - Alpine-based for smallest possible size
+- **Base image**: ~116MB (using `php:8.4-fpm-alpine` + Apache + extensions)
+- **Minimal footprint** - Official PHP base image + Alpine for smallest possible size
 
 ## Production Deployment
 
