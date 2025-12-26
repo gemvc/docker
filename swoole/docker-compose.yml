@@ -1,0 +1,84 @@
+# ============================================================================
+# GEMVC Docker Compose Configuration - DEVELOPMENT ENVIRONMENT
+# ============================================================================
+#
+# ⚠️  WARNING: This configuration is optimized for DEVELOPMENT ONLY!
+#
+# For PRODUCTION deployments:
+#   1. Change MySQL innodb-flush-log-at-trx-commit from 2 to 1 (CRITICAL)
+#   2. Enable binary logging (remove skip-log-bin, add --log-bin=mysql-bin)
+#   3. Enable SSL/TLS with proper certificates
+#   4. Use secrets management for passwords (not plain text)
+#   5. Configure automated backups and monitoring
+#   6. Review and adjust resource limits for production load
+#
+# See: MYSQL_PRODUCTION_GUIDE.md for complete production configuration
+#
+# ============================================================================
+
+services:
+  openswoole:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9501:9501"
+    volumes:
+      - ./:/var/www/html:delegated
+    restart: unless-stopped
+    networks:
+      - backend-network
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --authentication-policy=caching_sha2_password
+      - --host-cache-size=128
+      - --pid-file=/var/lib/mysql/mysql.pid
+      - --disable-ssl
+      - --log-error-verbosity=1
+      - --skip-log-bin
+      - --skip-name-resolve
+      - --skip-symbolic-links
+      - --innodb-flush-log-at-trx-commit=2
+      - --innodb-buffer-pool-size=1G
+      - --innodb-log-file-size=128M
+      - --innodb-flush-method=O_DIRECT
+      - --innodb-file-per-table=1
+      - --max-connections=200
+      - --thread-cache-size=50
+      - --table-open-cache=2000
+      - --table-definition-cache=1400
+      - --net-buffer-length=16384
+      - --max-allowed-packet=64M
+      - --bulk-insert-buffer-size=16M
+      - --read-buffer-size=512K
+      - --read-rnd-buffer-size=1M
+      - --sort-buffer-size=1M
+      - --join-buffer-size=1M
+      - --tmp-table-size=64M
+      - --max-heap-table-size=64M
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    networks:
+      - backend-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  backend-network:
+    driver: bridge
