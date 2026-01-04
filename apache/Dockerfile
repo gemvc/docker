@@ -197,7 +197,7 @@ RUN \
 # Health check and monitoring
 # ============================================================================
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost/fpm-ping || exit 1
+    CMD curl -f http://localhost/ || exit 1
 
 # Expose port 80
 EXPOSE 80
