@@ -109,8 +109,12 @@ RUN composer dump-autoload --optimize --classmap-authoritative
 
 EXPOSE 9501
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9501/ || exit 1
+# Define your own healthcheck in the final image (see above for the
+# recommended /index/healthz endpoint that returns a simple success
+# response without using the DB connection pool).
+# Example:
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#     CMD curl -f http://localhost:9501/index/healthz || exit 1
 
 CMD ["php", "index.php"]
 ```
@@ -157,16 +161,27 @@ COPY custom.ini /usr/local/etc/php/conf.d/custom.ini
 COPY . /var/www/html
 ```
 
-## 🏥 Health Check
+## 🏥 Health Checks
 
-The base image includes a health check that verifies the OpenSwoole server is responding:
+The base `gemvc/swoole` image does **not** define a `HEALTHCHECK` on purpose.
+Each application should define its own healthcheck suited to its routes and
+dependencies.
+
+For GEMVC applications it is **highly recommended** to expose a dedicated,
+lightweight health endpoint at:
+
+- `http://localhost:9501/index/healthz`
+
+This endpoint should return a simple success response and **must not** use
+the database connection pool (to avoid dropping or resetting pooled
+connections on every health probe).
+
+Example healthcheck in your application's Dockerfile:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9501/ || exit 1
+    CMD curl -f http://localhost:9501/index/healthz || exit 1
 ```
-
-You can override this in your application's Dockerfile if needed.
 
 ## 🛠️ Development
 

@@ -56,6 +56,8 @@ WORKDIR /var/www/html
 # Default user (can be overridden)
 USER www-data
 
-# Healthcheck (can be overridden in child images)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9501/ || exit 1
+# No healthcheck is defined in the base image on purpose.
+# It is strongly recommended that each application image built FROM this base
+# defines its own HEALTHCHECK suited to its routes and dependencies
+# (for example, a lightweight /index/healthz endpoint that does not
+# touch the database connection pool).
