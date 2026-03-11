@@ -1,7 +1,7 @@
 # GEMVC Apache Docker Image
 
 ## Overview
-Version 1.2.0 based on php:8.4-fpm-alpine
+Version 1.2.2 based on php:8.4-fpm-alpine
 GEMVC provides a pre-optimized Docker base image (`gemvc/apache:latest`) that includes PHP 8.4 FPM, Apache, and all performance optimizations. This allows developers to create simple, maintainable Dockerfiles with maximum performance out of the box.
 
 ## Quick Start
