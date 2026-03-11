@@ -9,11 +9,11 @@ FROM php:8.4-fpm-alpine
 # ============================================================================
 # Layer 1: Install system dependencies and PHP extensions (optimized)
 # ============================================================================
-RUN apk add --no-cache \
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache \
     apache2 \
     apache2-proxy \
     curl \
-    git \
     libpng \
     libjpeg-turbo \
     freetype \
@@ -192,12 +192,6 @@ RUN \
     # Create directories and set permissions
     mkdir -p /var/www/html /var/log/apache2 \
     && chown -R apache:apache /var/www/html /var/log/apache2
-
-# ============================================================================
-# Health check and monitoring
-# ============================================================================
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
 
 # Expose port 80
 EXPOSE 80

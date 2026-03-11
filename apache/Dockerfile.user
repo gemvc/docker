@@ -24,6 +24,17 @@ RUN chown -R apache:apache /var/www/html \
     && find /var/www/html -type f -exec chmod 644 {} \; \
     && find /var/www/html -type d -exec chmod 755 {} \;
 
+# Health checks:
+# The base gemvc/apache image intentionally does NOT define a HEALTHCHECK.
+# It is highly recommended that your GEMVC application exposes a lightweight
+# HTTP health endpoint such as http://localhost/healthz (or a framework-
+# specific path) which returns a simple success response and does NOT touch
+# the database connection pool or other heavy dependencies.
+#
+# Define a HEALTHCHECK in your own application image when appropriate, for example:
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+#     CMD curl -f http://localhost/healthz || exit 1
+
 # No need to override CMD - base image handles it
 # No need to override EXPOSE - base image handles it
 

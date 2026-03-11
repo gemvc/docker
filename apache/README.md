@@ -105,9 +105,13 @@ That's it! Your application is now running with maximum performance optimization
 
 ### Monitoring & Health Checks
 
-- **Health Check Endpoint**: `/fpm-ping`
-- **Status Endpoint**: `/fpm-status`
-- **Docker Health Check**: Automatic (30s interval)
+- **PHP-FPM Health Endpoint**: `/fpm-ping`
+- **PHP-FPM Status Endpoint**: `/fpm-status`
+- **Docker Health Check**: **Not defined in the base image on purpose**. Each application
+  image built FROM `gemvc/apache:latest` should define its own `HEALTHCHECK`
+  that points to a lightweight HTTP endpoint (for example `/healthz`) which
+  returns a simple success response and does **not** touch the database
+  connection pool or other heavy dependencies.
 - **Logging**: All logs to stdout/stderr (Docker-friendly)
 
 ## Usage Examples
@@ -193,6 +197,22 @@ volumes:
 networks:
   backend-network:
     driver: bridge
+```
+
+### Example Application Healthcheck
+
+In your application Dockerfile:
+
+```dockerfile
+FROM gemvc/apache:latest
+
+# ... your app setup ...
+
+# Application-defined healthcheck (example)
+# Expose a lightweight /healthz endpoint in your app that returns 200 OK
+# without hitting the database or heavy services.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost/index/healthz || exit 1
 ```
 
 ## Performance Benchmarks
@@ -389,7 +409,9 @@ docker push your-registry/gemvc/apache:latest
 2. **Production Builds**: Use `--no-dev` flag for Composer
 3. **Optimize Autoloader**: Always use `--optimize-autoloader`
 4. **Resource Limits**: Set appropriate limits in docker-compose.yml
-5. **Health Checks**: Use built-in health check endpoints
+5. **Health Checks**: Expose your own lightweight HTTP health endpoint
+   (e.g. `/healthz`) and point a Docker `HEALTHCHECK` at it; the base image
+   does not define one.
 6. **Logging**: All logs go to stdout/stderr (Docker best practice)
 7. **Permissions**: Always set proper file permissions
 
