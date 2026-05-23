@@ -1,8 +1,7 @@
-# ============================================================================
-# GEMVC Nginx Mac Base Image - Alpine Linux (Apple Silicon / Mac-friendly)
-# Build this as: gemvc/nginx-mac:latest
-# Usage: FROM gemvc/nginx-mac:latest
-# ============================================================================
+# ==============================================================================
+# GEMVC High-Performance Docker Image (Runtime Base)
+# Base: Alpine Linux | PHP: 8.4 (Stable) | Web Server: Nginx
+# ==============================================================================
 
 FROM php:8.4-fpm-alpine
 
@@ -52,14 +51,14 @@ COPY security.conf /etc/nginx/security.conf
 
 WORKDIR /var/www/html
 
-RUN echo "<?php echo 'GEMVC Nginx Mac Runtime is Ready!'; ?>" > /var/www/html/index.php
+RUN echo "<?php echo 'GEMVC Runtime is Ready via Nginx!'; ?>" > /var/www/html/index.php
 
 RUN sed -i 's/user nginx;/user www-data;/' /etc/nginx/nginx.conf \
-    && usermod -u 82 www-data && groupmod -g 82 www-data www-data \
+    && usermod -u 82 www-data && groupmod -g 82 www-data \
     && chown -R www-data:www-data /var/www/html \
     && find /var/www/html -type d -exec chmod 750 {} \; \
     && find /var/www/html -type f -exec chmod 640 {} \;
 
 EXPOSE 80
 
-CMD ["/bin/sh", "-c", "php-fpm -D && nginx -g 'daemon off;' "]
+CMD ["/bin/bash", "-c", "php-fpm -D && nginx -g 'daemon off;'"]

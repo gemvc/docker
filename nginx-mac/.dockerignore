@@ -1,0 +1,15 @@
+.git
+.idea
+.vscode
+.env
+docker
+tests
+README.md
+Dockerfile
+docker-compose.yml
+opcache-dev.ini
+*.log
+*.bak
+node_modules
+vendor
+README.md
