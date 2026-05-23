@@ -1,7 +1,7 @@
 # Minimal Production Dockerfile for STCMS
 # Assets are pre-built before pushing to image
 FROM php:8.2-apache
-ARG STCMS_VERSION=1.6.2
+ARG STCMS_VERSION=>=1.6.2
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -50,9 +50,14 @@ RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/custom.ini \
 WORKDIR /var/www/html
 
 # Initialize Composer and install gemvc/stcms package directly.
-# STCMS_VERSION can be overridden at build time for reproducible releases.
+# NOTE: Image tags are platform release tags and can be independent
+# from the bundled gemvc/stcms package version.
 RUN composer init --no-interaction --name="stcms/app" --description="STCMS Application" \
     && composer require "gemvc/stcms:${STCMS_VERSION}" --no-interaction --optimize-autoloader
+
+LABEL org.opencontainers.image.description="STCMS Mac runtime platform image" \
+      io.gemvc.stcms.version="${STCMS_VERSION}" \
+      io.gemvc.versioning.policy="image-tag-decoupled-from-stcms-package"
 
 # Create root .htaccess file (STCMS Secure Root .htaccess)
 RUN cat > /var/www/html/.htaccess << 'EOF'

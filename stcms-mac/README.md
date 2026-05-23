@@ -20,9 +20,12 @@ Build with multi-architecture support:
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
-  --build-arg STCMS_VERSION=1.7.0 \
+  --build-arg STCMS_VERSION=">=1.6.2" \
   -t gemvc/stcms-mac:latest .
 ```
+
+`stcms-mac` image tags are platform/runtime tags and can be independent
+from the bundled `gemvc/stcms` package version selected by `STCMS_VERSION`.
 
 ## Features
 
