@@ -4,24 +4,38 @@ set -euo pipefail
 # Build and push GEMVC Mac developer Docker images.
 # Mac variants are published as 1.0.0 and latest.
 
-# NOTE: Make sure you are logged in to Docker Hub.
-# docker login
+NAMESPACE="${NAMESPACE:-gemvc}"
+VERSION="${VERSION:-1.0.0}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64}"
 
-# Mac developer variants
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/apache-mac:1.0.0 -t gemvc/apache-mac:latest ./apache-mac
-# docker push gemvc/apache-mac:1.0.0
-# docker push gemvc/apache-mac:latest
+echo "Publishing Docker images to Docker Hub namespace: ${NAMESPACE}"
+echo "Version tag: ${VERSION}"
+echo "Platforms: ${PLATFORMS}"
 
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/nginx-mac:1.0.0 -t gemvc/nginx-mac:latest ./nginx-mac
-# docker push gemvc/nginx-mac:1.0.0
-# docker push gemvc/nginx-mac:latest
+# NOTE:
+# 1) Run `docker login` first.
+# 2) Create these repositories on Docker Hub (recommended):
+#    - ${NAMESPACE}/apache-mac
+#    - ${NAMESPACE}/nginx-mac
+#    - ${NAMESPACE}/swoole-mac
+#    - ${NAMESPACE}/stcms-mac
 
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/swoole-mac:1.0.0 -t gemvc/swoole-mac:latest ./swoole-mac
-# docker push gemvc/swoole-mac:1.0.0
-# docker push gemvc/swoole-mac:latest
+build_and_push() {
+  local image_name="$1"
+  local context_dir="$2"
 
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/stcms-mac:1.0.0 -t gemvc/stcms-mac:latest ./stcms-mac
-# docker push gemvc/stcms-mac:1.0.0
-# docker push gemvc/stcms-mac:latest
+  echo "Building and pushing ${NAMESPACE}/${image_name}:${VERSION} and :latest"
+  docker buildx build \
+    --platform "${PLATFORMS}" \
+    --push \
+    -t "${NAMESPACE}/${image_name}:${VERSION}" \
+    -t "${NAMESPACE}/${image_name}:latest" \
+    "./${context_dir}"
+}
 
-echo "Build completed. Uncomment push commands once you are ready to publish."
+build_and_push "apache-mac" "apache-mac"
+build_and_push "nginx-mac" "nginx-mac"
+build_and_push "swoole-mac" "swoole-mac"
+build_and_push "stcms-mac" "stcms-mac"
+
+echo "Publish completed successfully."

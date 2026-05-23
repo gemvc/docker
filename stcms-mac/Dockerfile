@@ -54,6 +54,58 @@ WORKDIR /var/www/html
 RUN composer init --no-interaction --name="stcms/app" --description="STCMS Application" \
     && composer require "gemvc/stcms:1.6.2" --no-interaction --optimize-autoloader
 
+# Create root .htaccess file (STCMS Secure Root .htaccess)
+RUN cat > /var/www/html/.htaccess << 'EOF'
+#
+# STCMS Secure Root .htaccess
+#
+
+# --- 1. Security: Block all files and directories starting with a dot ---
+# This is a  general rule that protects .git, .env, etc.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\." - [F]
+</IfModule>
+
+
+# --- 2. Security: Explicitly forbid access to sensitive directories ---
+# Any direct web request to these folders will be blocked.
+# This replaces the need for separate .htaccess files inside them.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(src|vendor|templates|pages|components|assets)/?$ - [F,NC,L]
+</IfModule>
+
+
+# --- 3. Routing: Pass all other requests to the public folder ---
+# If a request was not blocked by the rules above, it's sent to the public folder.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+EOF
+
+# Create public directory and public/.htaccess file
+RUN mkdir -p /var/www/html/public && \
+    cat > /var/www/html/public/.htaccess << 'EOF'
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Send requests to front controller if they don't point to a real file or directory
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+        Header set Cache-Control "public, immutable, max-age=31536000"
+    </FilesMatch>
+</IfModule>
+EOF
+
 # Copy application files (including .htaccess files)
 COPY --chown=www-data:www-data . .
 
