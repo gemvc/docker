@@ -18,9 +18,25 @@ FROM gemvc/docker:nginx-latest
 COPY . /var/www/html
 ```
 
+### Nginx Mac (Apple Silicon / Mac developer variant)
+```dockerfile
+FROM gemvc/nginx-mac:latest
+
+# Copy your application
+COPY . /var/www/html
+```
+
 ### Apache + mod_php
 ```dockerfile
 FROM gemvc/docker:apache-latest
+
+# Copy your application
+COPY . /var/www/html
+```
+
+### Apache Mac (Apple Silicon / Mac developer variant)
+```dockerfile
+FROM gemvc/apache-mac:latest
 
 # Copy your application
 COPY . /var/www/html
@@ -34,9 +50,25 @@ FROM gemvc/docker:swoole-latest
 COPY . /var/www/html
 ```
 
+### OpenSwoole Mac (Apple Silicon / Mac developer variant)
+```dockerfile
+FROM gemvc/swoole-mac:latest
+
+# Copy your application
+COPY . /var/www/html
+```
+
 ### Alpine (Lightweight)
 ```dockerfile
 FROM gemvc/docker:alpine-latest
+
+# Copy your application
+COPY . /var/www/html
+```
+
+### STCMS Mac (Apple Silicon / Mac developer variant)
+```dockerfile
+FROM gemvc/stcms-mac:latest
 
 # Copy your application
 COPY . /var/www/html
@@ -48,7 +80,11 @@ COPY . /var/www/html
 |-----|-------------|------|
 | `nginx-latest`, `nginx-php8.2` | Nginx + PHP-FPM configuration | ~400MB |
 | `apache-latest`, `apache-php8.2` | Apache + mod_php configuration | ~450MB |
+| `apache-mac-latest` | Apache Mac developer variant | ~450MB |
+| `nginx-mac-latest` | Nginx Mac developer variant | ~400MB |
 | `swoole-latest`, `swoole-php8.2` | OpenSwoole configuration | ~300MB |
+| `swoole-mac-latest` | OpenSwoole Mac developer variant | ~300MB |
+| `stcms-mac-latest` | STCMS Mac developer variant | ~520MB |
 | `alpine-latest`, `alpine-php8.2` | Lightweight Alpine-based | ~200MB |
 
 ## ✨ Features
@@ -105,6 +141,18 @@ COPY . /var/www/html
 - URL rewriting enabled
 - Security rules included
 
+#### Apache Mac Variant
+- Mac developer / Apple Silicon friendly naming
+- Same Apache + PHP-FPM optimized runtime
+- Supports multi-arch builds for Linux containers on Mac
+- Ideal for GEMVC backend development on Mac hosts
+
+#### Nginx Mac Variant
+- Nginx + PHP-FPM for Mac hosts
+- Supports multi-arch builds for Apple Silicon
+- Composer ready with optimized PHP settings
+- Ideal for Mac backend developers
+
 #### OpenSwoole Variant
 - OpenSwoole latest
 - Event-driven architecture
@@ -112,11 +160,23 @@ COPY . /var/www/html
 - WebSocket support
 - Coroutine support
 
+#### OpenSwoole Mac Variant
+- Apple Silicon-friendly OpenSwoole base image
+- Same performance tuning as standard variant
+- Supports multi-arch builds for Docker on Mac
+- Ideal for iOS/macOS API backend development
+
 #### Alpine Variant
 - Alpine Linux base
 - Minimal image size
 - Same features as Nginx
 - Optimized for CI/CD
+
+#### STCMS Mac Variant
+- Apache + PHP 8.2 for STCMS development on Mac
+- APCu caching and production-ready Apache settings
+- Supports multi-arch builds for Docker on Mac
+- Ideal for GEMVC STCMS developers using Apple Silicon
 
 ## 🛠️ Usage Examples
 
