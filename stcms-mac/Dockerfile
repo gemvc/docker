@@ -1,6 +1,7 @@
 # Minimal Production Dockerfile for STCMS
 # Assets are pre-built before pushing to image
 FROM php:8.2-apache
+ARG STCMS_VERSION=1.6.2
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -48,11 +49,10 @@ RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/custom.ini \
 # Set working directory
 WORKDIR /var/www/html
 
-# Initialize Composer and install gemvc/stcms package directly
-# Fixed to version 1.6.2 for reproducibility and predictability
-# This makes the image independent - always includes gemvc/stcms 1.6.2
+# Initialize Composer and install gemvc/stcms package directly.
+# STCMS_VERSION can be overridden at build time for reproducible releases.
 RUN composer init --no-interaction --name="stcms/app" --description="STCMS Application" \
-    && composer require "gemvc/stcms:1.6.2" --no-interaction --optimize-autoloader
+    && composer require "gemvc/stcms:${STCMS_VERSION}" --no-interaction --optimize-autoloader
 
 # Create root .htaccess file (STCMS Secure Root .htaccess)
 RUN cat > /var/www/html/.htaccess << 'EOF'

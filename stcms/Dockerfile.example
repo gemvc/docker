@@ -2,18 +2,19 @@
 # This shows how to extend the stcms-base image in your project
 #
 # Usage in your project:
-#   1. Build/pull the base image: stcms-base:x.x.x (replace x.x.x with version, e.g., 1.6.2)
+#   1. Build/pull the base image: stcms-base:x.x.x (replace x.x.x with version, e.g., 1.7.0)
 #   2. Copy this Dockerfile to your project root
 #   3. Customize as needed (add volumes, env vars, etc.)
 #   4. Build: docker build -t my-stcms-app:latest .
 
 # Use the STCMS base image
 # Option 1: Use from registry
-# Replace x.x.x with the STCMS version (e.g., 1.6.2)
+# Replace x.x.x with the STCMS version (e.g., 1.7.0)
 # FROM your-registry/stcms-base:x.x.x
 
-# Option 2: Use local base image (build Dockerfile.x.x.x first)
-# Replace x.x.x with the STCMS version (e.g., 1.6.2)
+# Option 2: Use local base image
+# Build locally with:
+# docker build --build-arg STCMS_VERSION=x.x.x -t stcms-base:x.x.x -f Dockerfile .
 FROM stcms-base:x.x.x
 
 # Set working directory (already set in base)

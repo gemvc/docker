@@ -28,8 +28,8 @@ This is a **base image repository** for STCMS. It provides a ready-to-use founda
 ### Build the base image:
 
 ```bash
-# Replace x.x.x with the STCMS version (e.g., 1.6.2)
-docker build -f Dockerfile.x.x.x -t stcms-base:x.x.x .
+# Replace x.x.x with the STCMS version (e.g., 1.7.0)
+docker build --build-arg STCMS_VERSION=x.x.x -t stcms-base:x.x.x -f Dockerfile .
 ```
 
 ### Push to registry (optional, for team use):
@@ -46,7 +46,7 @@ docker push your-registry/stcms-base:x.x.x
 
 ```dockerfile
 # Use the STCMS base image
-# Replace x.x.x with the STCMS version (e.g., 1.6.2)
+# Replace x.x.x with the STCMS version (e.g., 1.7.0)
 FROM stcms-base:x.x.x
 # Or from registry:
 # FROM your-registry/stcms-base:x.x.x
@@ -68,8 +68,8 @@ See `Dockerfile.example` for a complete example.
 ### 2. Build your application image:
 
 ```bash
-# Make sure base image exists first (replace x.x.x with version, e.g., 1.6.2)
-docker build -f Dockerfile.x.x.x -t stcms-base:x.x.x .
+# Make sure base image exists first (replace x.x.x with version, e.g., 1.7.0)
+docker build --build-arg STCMS_VERSION=x.x.x -t stcms-base:x.x.x -f Dockerfile .
 
 # Then build your application
 docker build -t my-stcms-app:latest .
@@ -85,7 +85,7 @@ docker build -t my-stcms-app:latest .
 
 ## Base Image Contents
 
-The `Dockerfile.x.x.x` (where `x.x.x` is the STCMS version, e.g., `1.6.2`) includes:
+The `Dockerfile` supports `STCMS_VERSION` (for example `1.7.0`) and includes:
 1. PHP 8.2 with Apache
 2. Required PHP extensions (zip, intl, mbstring, opcache, apcu)
 3. Composer
@@ -146,8 +146,8 @@ API_BASE_URL=https://api.example.com
 ### Base Image Workflow
 
 ```bash
-# 1. Build base image (replace x.x.x with version, e.g., 1.6.2)
-docker build -f Dockerfile.x.x.x -t your-registry/stcms-base:x.x.x .
+# 1. Build base image (replace x.x.x with version, e.g., 1.7.0)
+docker build --build-arg STCMS_VERSION=x.x.x -t your-registry/stcms-base:x.x.x -f Dockerfile .
 
 # 2. Push base image to registry
 docker push your-registry/stcms-base:x.x.x

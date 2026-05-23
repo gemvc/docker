@@ -19,7 +19,9 @@ COPY . .
 Build with multi-architecture support:
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/stcms-mac:latest .
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --build-arg STCMS_VERSION=1.7.0 \
+  -t gemvc/stcms-mac:latest .
 ```
 
 ## Features
