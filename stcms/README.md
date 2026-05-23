@@ -23,12 +23,20 @@ This is a **base image repository** for STCMS. It provides a ready-to-use founda
 
 **You extend this base image in your own project** with your application code.
 
+## Versioning Policy
+
+- `stcms-base` image tags are **platform/runtime** versions.
+- `gemvc/stcms` package version is controlled separately via `STCMS_VERSION`.
+- They can be independent by design (for example, image `1.7.0` can bundle package `1.6.2`).
+- The built image includes labels that record the bundled package constraint/value.
+
 ## Building the Base Image
 
 ### Build the base image:
 
 ```bash
-# Replace x.x.x with the STCMS version (e.g., 1.7.0)
+# Replace x.x.x with the image tag version you want
+# Optional: override package version with STCMS_VERSION (default is >=1.6.2)
 docker build --build-arg STCMS_VERSION=x.x.x -t stcms-base:x.x.x -f Dockerfile .
 ```
 
