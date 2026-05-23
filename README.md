@@ -6,6 +6,8 @@
 
 Official Docker images for GEMVC Framework providing optimized, ready-to-use environments for development and production.
 
+New Mac developer variants are published as `1.0.0` for `apache-mac`, `nginx-mac`, `swoole-mac`, and `stcms-mac`.
+
 ## 🚀 Quick Start
 
 Choose your preferred server configuration:
