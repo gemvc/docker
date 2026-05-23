@@ -38,3 +38,14 @@ These variants are designed for Mac hosts and Apple Silicon-friendly development
 - The Mac variants are still Linux-based containers.
 - They are intended for backend/API development on Mac hosts, especially Apple Silicon.
 - The standard repo images remain unchanged; these are additional Mac-specific packages.
+
+---
+
+## Patch Update
+### apache-mac 1.0.1
+
+- Updated and republished `gemvc/apache-mac` as a patch release.
+- Published tags:
+  - `gemvc/apache-mac:1.0.1`
+  - `gemvc/apache-mac:latest`
+- `latest` now points to `1.0.1`.
