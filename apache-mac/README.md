@@ -1,9 +1,8 @@
 # GEMVC Apache Mac Base Image
 
-This folder contains the Mac developer variant for GEMVC Apache.
-It is designed to be used by Mac developers and Apple Silicon hosts as a dedicated backend base image.
+Mac-friendly base image for GEMVC PHP apps (Apple Silicon and Intel).
 
-## Usage
+## App Dockerfile (developers)
 
 ```dockerfile
 FROM gemvc/apache-mac:latest
@@ -12,26 +11,42 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock* ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 COPY . .
+RUN chown -R apache:apache /var/www/html
 ```
 
-## Build
+No Apache vhost or extra HTTP config in the application repo.
 
-Build this image with Apple Silicon / Intel Mac support:
+## Files in this repo
+
+| File                | Role             |
+|---------------------|------------------|
+| `Dockerfile`        | Base image build |
+| `apache-vhost.conf` | Apache virtual host (fixes missing `</FilesMatch>` bug) |
+| `Dockerfile.user`   | Example app layer|
+
+## Test base image locally
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/apache-mac:latest .
+docker build -t gemvc/apache-mac:latest .
+docker run --rm -p 8080:80 gemvc/apache-mac:latest
 ```
 
-## Features
+Check logs: no `httpd: Syntax error` on `vhost.conf`. Full stack testing uses each app’s own `docker-compose.yml` (e.g. BackendBetAutomation).
 
-- Apache 2 + PHP 8.4 FPM
-- Composer pre-installed
-- Redis and APCu extensions
-- OPcache enabled and tuned
-- Mac-friendly variant naming for development workflows
+## Publish new version
 
-## Notes
+```bash
+docker build -t gemvc/apache-mac:latest .
+docker buildx build --platform linux/amd64,linux/arm64 -t gemvc/apache-mac:latest --push .
+```
 
-- This is still a Linux-based Docker image.
-- It is intended for backend API and PHP development on Mac hosts.
-- For iOS or macOS native app builds you still need Apple toolchains outside this container.
+Developers then:
+
+```bash
+docker pull gemvc/apache-mac:latest
+docker compose build --no-cache web && docker compose up -d
+```
+
+## If web container keeps restarting
+
+Old images had a broken vhost built with `echo` (missing `</FilesMatch>`). Rebuild and push this repo, then pull the new tag.
